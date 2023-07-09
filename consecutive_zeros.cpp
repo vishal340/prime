@@ -1,8 +1,11 @@
 #include<iostream>
 #include<fstream>
 #include<cmath>
+#include<vector>
 
-int consective_zero(int** current_mod,int* prime,int* mod,int number){
+using namespace std;
+
+int consective_zero(vector<vector<int>>& current_mod,const vector<int>& prime,const vector<int>& mod,int number){
     int n=0;
     for(int i=0;i<number;i++){
         for(int j=0;j<mod[i];j++){
@@ -17,7 +20,7 @@ int consective_zero(int** current_mod,int* prime,int* mod,int number){
     return n;
 }
 
-void variable_loop(int** current_mod,int* prime,int* mod,int* total,int number,int& max_zero,int decrement){
+void variable_loop(vector<vector<int>>& current_mod,const vector<int>& prime,const vector<int>& mod,const vector<int>& total,int number,int& max_zero,int decrement){
     int temp=total[decrement];
     while(temp-- >0){
         if(decrement>0)
@@ -45,17 +48,17 @@ void variable_loop(int** current_mod,int* prime,int* mod,int* total,int number,i
     }
 }
 
-int function(int* prime,int* mod,int number){
+int function(const vector<int>& prime,const vector<int>& mod,int number){
     int max_zero=0;
-    int* current_mod[number];
+    vector<vector<int>>current_mod(number,vector<int>());
     for(int i=0;i<number;i++){
-        current_mod[i]=new int[2*mod[i]];
+        current_mod[i].assign(2*mod[i],0);
         for(int j=0;j<mod[i];j++){
             current_mod[i][2*j]=j;
             current_mod[i][2*j+1]=j+prime[i]-mod[i];
         }
     }
-    int total[number];
+    vector<int> total(number);
     for(int i=0;i<number;i++){
         total[i]=1;
         for(int j=0;j<mod[i];j++)
@@ -63,34 +66,33 @@ int function(int* prime,int* mod,int number){
         for(int j=1;j<=mod[i];j++)
             total[i]=(int)(total[i]/j);
     }
-    variable_loop(&current_mod[0],prime,mod,&total[0],number,max_zero,number-1);    
+    variable_loop(current_mod,prime,mod,total,number,max_zero,number-1);
     return max_zero;
 }
 
 int main(int argc,char** argv){
-    std::ifstream in(argv[1]);
+    ifstream in(argv[1]);
     int number;
     in>>number;
-    int prime[number];
-    int mod[number];
+    vector<int>prime(number);
+    vector<int>mod(number);
     for(int i=0;i<number;i++){
         in>>prime[i];
         in>>mod[i];
     }
-    long double prob=1;
+    long double prob=1.0;
     for(int i=0;i<number;i++){
         prob*=(prime[i]-mod[i])/(long double)prime[i];
     }
-    prob=1-prob;
-    long double total=1;
+    prob=1.0-prob;
+    long double total=1.0;
     for(int i=0;i<number;i++){
         for(int j=0;j<mod[i];j++)
             total*=prime[i]-j;
         for(int j=1;j<=mod[i];j++)
             total=total/j;
     }
-    std::cout<<std::log(total)/std::log(1/prob)<<'\t';
-    std::cout<<function(&prime[0],&mod[0],number)<<'\n';
-
+    cout<<log(total)/log(1/prob)<<'\t';
+    cout<<function(prime,mod,number)<<'\n';
     return 0;
 }

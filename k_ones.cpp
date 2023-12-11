@@ -2,7 +2,6 @@
 // mi>0 and mi<pi and p1<p2 and gcd(p1,p2)=1
 
 #include <algorithm>
-#include <cmath>
 #include <fstream>
 #include <iostream>
 #include <vector>

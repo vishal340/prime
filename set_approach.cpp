@@ -61,9 +61,13 @@ int main(int argc, char *argv[]) {
           temp[j] = t;
       }
     }
-    std::vector<mpz_class> acc(ones - 1, 0);
+    std::vector<mpz_class> acc(ones - 1, 0), acc1(ones - 1, 0);
+    std::vector<std::vector<unsigned int>> minimum;
+    std::vector<unsigned int> cur_min(ones);
+    std::vector<int> min_len;
     auto func = [phi, total, number, ones, prime, x, comb,
-                 &acc](const std::vector<unsigned int> &dist) {
+                 &acc1](const std::vector<unsigned int> &dist,
+                        unsigned int *minimum, int &min_len) {
       for (unsigned int i = 1; i <= phi; i++) {
         bool next = false;
         for (int j = 0; j < number; j++) {
@@ -78,6 +82,12 @@ int main(int argc, char *argv[]) {
         for (int j = 1; j < ones; j++)
           temp[j] = ((temp[j] - temp[0]) * i + temp[j]) % total;
         std::sort(temp.begin(), temp.end());
+        auto t = temp[ones - 1] - temp[0];
+        if (min_len > t) {
+          for (int j = 0; j < ones; j++)
+            minimum[j] = temp[j];
+          min_len = t;
+        }
         for (int t = 0; t < total; t++) {
           int ret;
           if (t + x > t) {
@@ -92,20 +102,39 @@ int main(int argc, char *argv[]) {
             });
           }
           for (int k = 2; k <= ret; k++) {
-            acc[k - 2] += comb[ret - 2][k - 2];
+            acc1[k - 2] += comb[ret - 2][k - 2];
           }
         }
       }
     };
     for (int i = 0; i < rank; i++) {
-      func(basis[i]);
+      int cur_min_len = 1 < 30;
+      func(basis[i], &cur_min[0], cur_min_len);
+      if (i > 0) {
+        for (int j = 0; j < min_len.size(); j++) {
+          if (cur_min_len == min_len[j]) {
+            auto t = minimum[j][0] - cur_min[0];
+            for (int k = 1; k < ones; k++) {
+              if (cur_min[k] + t != minimum[j][k])
+                goto next1;
+            }
+          }
+        }
+      }
+      for (int j = 0; j < ones - 1; j++)
+        acc[j] += acc1[j];
+      minimum.push_back(cur_min);
+      min_len.push_back(cur_min_len);
+    next1:
+      acc1.assign(ones - 1, 0);
+      cur_min_len = 1 < 30;
     }
     out << it << '\n';
     mpz_class normalize = x * (x - 1);
     normalize /= 2;
     mpf_class compare = (mpf_class)(2 * phi) / (total - 1);
     int inc = 2;
-    uint64_t prod = (uint64_t)total * phi * rank;
+    uint64_t prod = (uint64_t)total * phi * min_len.size();
     for (auto a : acc) {
       if (a != 0) {
         mpf_class temp = (mpf_class)a / normalize;

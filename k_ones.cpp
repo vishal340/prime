@@ -1,5 +1,5 @@
 // this is for 2 coprimes
-// mi>0 and mi<pi and p1<p2 and gcd(p1,p2)=1
+// input: mi>0 and mi<pi and p1<p2 and gcd(p1,p2)=1
 
 #include <algorithm>
 #include <fstream>

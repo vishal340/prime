@@ -80,27 +80,32 @@ int function(const vector<int> &prime, const vector<int> &mod, int number) {
 
 int main(int argc, char **argv) {
   ifstream in(argv[1]);
-  int number;
-  in >> number;
-  vector<int> prime(number);
-  vector<int> mod(number);
-  for (int i = 0; i < number; i++) {
-    in >> prime[i];
-    in >> mod[i];
+  ofstream out(argv[2]);
+  int iter;
+  in >> iter;
+  while (iter--) {
+    int number;
+    in >> number;
+    vector<int> prime(number);
+    vector<int> mod(number);
+    for (int i = 0; i < number; i++) {
+      in >> prime[i];
+      in >> mod[i];
+    }
+    long double prob = 1.0;
+    for (int i = 0; i < number; i++) {
+      prob *= (prime[i] - mod[i]) / (long double)prime[i];
+    }
+    prob = 1.0 - prob;
+    long double total = 1.0;
+    for (int i = 0; i < number; i++) {
+      for (int j = 0; j < mod[i]; j++)
+        total *= prime[i] - j;
+      for (int j = 1; j <= mod[i]; j++)
+        total = total / j;
+    }
+    out << log(total) / log(1 / prob) << '\t';
+    out << function(prime, mod, number) << '\n';
   }
-  long double prob = 1.0;
-  for (int i = 0; i < number; i++) {
-    prob *= (prime[i] - mod[i]) / (long double)prime[i];
-  }
-  prob = 1.0 - prob;
-  long double total = 1.0;
-  for (int i = 0; i < number; i++) {
-    for (int j = 0; j < mod[i]; j++)
-      total *= prime[i] - j;
-    for (int j = 1; j <= mod[i]; j++)
-      total = total / j;
-  }
-  cout << log(total) / log(1 / prob) << '\t';
-  cout << function(prime, mod, number) << '\n';
   return 0;
 }

@@ -18,20 +18,43 @@ vector<bool> two(vector<int> per_mod, int p, int x, int k) {
       mod2 += per_mod[i] * per_mod[j];
   }
   vector<bool> vec(p - 1);
-  float t1 = 2 * mod1 / (float)(p * x * (x - 1));
-  float t2 = (k - 1) / (float)(p * (k * p - 1));
-  float t3 = 2 * mod2 / (float)(p * (p - 1) * x * (x - 1));
-  float t4 = k / (float)(p * (k * p - 1));
+  int t1 = 2 * mod1 * (k * p - 1);
+  int t2 = (k - 1) * x * (x - 1);
+  int t3 = 2 * mod2 * (k * p - 1);
+  int t4 = k * (p - 1) * x * (x - 1);
   vec[0] = (t1 <= t2);
   for (int i = 1; i < p - 1; i++) {
-    float t5 = i * (i + 1) * t3;
-    float t6 = i * (i + 1) * t4;
-    vec[i] = (((i + 1) * t1 + t5) <= ((i + 1) * t2 + t6));
+    vec[i] = (((i + 1) * (t1 + i * t3)) <= ((i + 1) * (t2 + i * t4)));
   }
   return vec;
 }
 
-void mod_m(vector<int> per_mod, vector<bool> b, int p, int x, int k) {}
+vector<bool> three(vector<int> per_mod, int p, int x, int k) {
+  int mod1 = 0, mod2 = 0, mod3 = 0;
+  for (int i = 0; i < p; i++) {
+    mod1 += (per_mod[i] * (per_mod[i] - 1) * (per_mod[i] - 2)) / 6;
+    for (int j = i + 1; j < p; j++) {
+      mod2 += (per_mod[i] * per_mod[j] * (per_mod[i] + per_mod[j] - 2)) / 2;
+      for (int k = j + 1; k < p; k++) {
+        mod3 += per_mod[i] * per_mod[j] * per_mod[k];
+      }
+    }
+  }
+  int t1 = 6 * mod1 * (k * p - 1) * (k * p - 2);
+  int t2 = (k - 1) * (k - 2) * x * (x - 1) * (x - 2);
+  int t3 = 6 * mod2 * (k * p - 1) * (k * p - 2);
+  int t4 = 3 * k * (k - 1) * (p - 1) * x * (x - 1) * (x - 2);
+  int t5 = 6 * mod3 * (k * p - 1) * (k * p - 2);
+  int t6 = k * k * (p - 1) * (p - 2) * x * (x - 1) * (x - 2);
+  vector<bool> vec(p - 1);
+  vec[0] = (t1 <= t2);
+  vec[1] = (2 * (t1 + t3) <= 2 * (t2 + t4));
+  for (int i = 2; i < p - 1; i++) {
+    vec[i] = (((i + 1) * (t1 + i * (t3 + (i - 1) * t5))) <=
+              ((i + 1) * (t2 + i * (t4 + (i - 1) * t6))));
+  }
+  return vec;
+}
 
 int main(int argc, char **argv) {
   int p, x, k;
@@ -42,23 +65,30 @@ int main(int argc, char **argv) {
   in >> iter;
   for (int it = 1; it <= iter; it++) {
     in >> p >> k >> x;
-    int total = k * p;
-    vector<int> vec(total);
+    vector<int> vec(k * p);
     auto t = vec.begin();
     for (int i = 0; i < k - 1; i++) {
       iota(t, t + p, 0);
       t += p;
     }
-    iota(t, t + p, 1);
+    iota(t, t + p, 0);
     unsigned seed = chrono::system_clock::now().time_since_epoch().count();
     shuffle(vec.begin(), vec.end(), default_random_engine(seed));
-    vector<int> per_mod(p, 0), false_vec(p - 1, 0);
+    vector<int> per_mod(p, 0);
     for (int i = 0; i < x; i++) {
       per_mod[vec[i]]++;
     }
     vector<bool> b = two(per_mod, p, x, k);
-    if (equal(b.begin(), b.end(), false_vec.begin()))
-      continue;
-    mod_m(per_mod, b, p, x, k);
+    vector<bool> b1 = three(per_mod, p, x, k);
+    for (int i = 0; i < p - 1; i++) {
+      // cout << b[i] << ' ' << b1[i] << '\n';
+      if (b[i] && !b1[i]) {
+        cout << it << ' ' << i + 1 << '\n';
+        for (auto j : per_mod)
+          cout << j << ' ';
+        cout << '\n';
+        return 0;
+      }
+    }
   }
 }

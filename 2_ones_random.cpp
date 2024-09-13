@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cstdint>
 #include <fstream>
 #include <iostream>
 #include <random>
@@ -35,17 +36,17 @@ vector<bool> three(vector<int> per_mod, int p, int x, int k) {
     mod1 += (per_mod[i] * (per_mod[i] - 1) * (per_mod[i] - 2)) / 6;
     for (int j = i + 1; j < p; j++) {
       mod2 += (per_mod[i] * per_mod[j] * (per_mod[i] + per_mod[j] - 2)) / 2;
-      for (int k = j + 1; k < p; k++) {
-        mod3 += per_mod[i] * per_mod[j] * per_mod[k];
+      for (int l = j + 1; l < p; l++) {
+        mod3 += per_mod[i] * per_mod[j] * per_mod[l];
       }
     }
   }
-  int t1 = 6 * mod1 * (k * p - 1) * (k * p - 2);
-  int t2 = (k - 1) * (k - 2) * x * (x - 1) * (x - 2);
-  int t3 = 6 * mod2 * (k * p - 1) * (k * p - 2);
-  int t4 = 3 * k * (k - 1) * (p - 1) * x * (x - 1) * (x - 2);
-  int t5 = 6 * mod3 * (k * p - 1) * (k * p - 2);
-  int t6 = k * k * (p - 1) * (p - 2) * x * (x - 1) * (x - 2);
+  int64_t t1 = 6 * mod1 * (int64_t)(k * p - 1) * (k * p - 2);
+  int64_t t2 = (k - 1) * (k - 2) * (int64_t)x * (x - 1) * (x - 2);
+  int64_t t3 = 6 * mod2 * (int64_t)(k * p - 1) * (k * p - 2);
+  int64_t t4 = 3 * k * (k - 1) * (int64_t)(p - 1) * x * (x - 1) * (x - 2);
+  int64_t t5 = 6 * mod3 * (int64_t)(k * p - 1) * (k * p - 2);
+  int64_t t6 = k * k * (p - 1) * (int64_t)(p - 2) * x * (x - 1) * (x - 2);
   vector<bool> vec(p - 1);
   vec[0] = (t1 <= t2);
   vec[1] = (2 * (t1 + t3) <= 2 * (t2 + t4));
@@ -80,14 +81,21 @@ int main(int argc, char **argv) {
     }
     vector<bool> b = two(per_mod, p, x, k);
     vector<bool> b1 = three(per_mod, p, x, k);
-    for (int i = 0; i < p - 1; i++) {
-      // cout << b[i] << ' ' << b1[i] << '\n';
-      if (b[i] && !b1[i]) {
-        cout << it << ' ' << i + 1 << '\n';
-        for (auto j : per_mod)
-          cout << j << ' ';
-        cout << '\n';
-        return 0;
+    bool cont = true;
+    for (auto i : b) {
+      if (!i) {
+        cont = false;
+        break;
+      }
+    }
+    if (cont) {
+      for (int i = 0; i < p - 1; i++) {
+        if (!b1[i]) {
+          cout << it << ' ' << i + 1 << '\n';
+          for (auto j : per_mod)
+            cout << j << ' ';
+          cout << '\n';
+        }
       }
     }
   }

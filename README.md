@@ -20,3 +20,4 @@ An example of such input is as follows,
 13 5
 
 As you can see, above example provides 2 inputs.
+The first line of each input could require another natural number(i use x notation for it) for some programs.

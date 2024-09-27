@@ -27,13 +27,13 @@ int main(int argc, char *argv[]) {
     for (int i = 0; i < number; i++) {
       in >> primes[i] >> mod[i];
     }
-    int total = 1;
-    float P = 1;
+    int64_t total = 1;
+    double P = 1;
     for (int i = 0; i < number; i++) {
       total *= primes[i];
       t *= mod[i];
     }
-    P = t / (float)total;
+    P = t / (double)total;
 
     std::vector<int[2]> cur_mod(number);
 
@@ -49,17 +49,17 @@ int main(int argc, char *argv[]) {
           for (int it = 0; it < number; it++) {
             cur_mod[it][1] = j % primes[it];
           }
-          float prob = 0;
+          double prob = 0;
           for (int l = 0; l < x[I]; l++) {
             if (l != i && l != j) {
-              float temp_prob = 1.0;
+              double temp_prob = 1.0;
               for (int it = 0; it < number; it++) {
                 auto m1 = l % primes[it];
                 if (m1 != cur_mod[it][0] && m1 != cur_mod[it][1]) {
                   if (cur_mod[it][0] != cur_mod[it][1]) {
-                    temp_prob *= (mod[it] - 2) / (float)(primes[it] - 2);
+                    temp_prob *= (mod[it] - 2) / (double)(primes[it] - 2);
                   } else {
-                    temp_prob *= (mod[it] - 1) / (float)(primes[it] - 1);
+                    temp_prob *= (mod[it] - 1) / (double)(primes[it] - 1);
                   }
                 }
               }
@@ -68,9 +68,8 @@ int main(int argc, char *argv[]) {
           }
           prob /= (x[I] - 2);
           if (prob > P) {
-            std::cout << iter << ' ' << i << ' ' << j << ' ';
-            std::cout << std::setprecision(9) << P << ' ' << prob << '\n';
-            return 1;
+            std::cout << iter << ' ' << I << ' ' << i << ' ' << j << ' ';
+            std::cout << std::setprecision(16) << P << ' ' << prob << '\n';
           }
         }
       }

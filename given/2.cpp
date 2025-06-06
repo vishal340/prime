@@ -1,6 +1,5 @@
 #include <fstream>
 #include <iostream>
-#include <omp.h>
 #include <vector>
 
 int main(int argc, char *argv[]) {
@@ -18,14 +17,13 @@ int main(int argc, char *argv[]) {
     int64_t iter_mod = 1;
     for (int i = 0; i < number; i++) {
       total *= primes[i];
-      iter_mod *= primes[i] - 3;
+      iter_mod *= primes[i] - 2;
     }
-#pragma omp parallel for schedule(dynamic, iter_mod / atoi(argv[2]))
     for (int64_t k = 0; k < iter_mod; k++) {
       std::vector<int> mod(number);
       int ones = 1;
       for (int i = 0; i < number; i++) {
-        mod[i] = 2 + (k % (primes[i] - 3));
+        mod[i] = 2 + (k % (primes[i] - 2));
         ones *= mod[i];
       }
       ones--;
@@ -43,6 +41,7 @@ int main(int argc, char *argv[]) {
         if (acc / i > P) {
           std::cout << iter << ' ' << k << ' ' << i << ' ' << acc / i << ' '
                     << ' ' << P << '\n';
+          break;
         }
       }
     }

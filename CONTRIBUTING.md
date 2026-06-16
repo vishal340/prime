@@ -3,6 +3,7 @@
 ## Code Style
 
 - Use clear, descriptive variable names
+- Shared logic belongs in `include/prime/` — keep program `main()` files thin
 - Add comments explaining non-obvious mathematical operations
 - Follow C++11 standard or later
 - Use `const` where appropriate
@@ -13,10 +14,13 @@
 When adding a new program:
 
 1. **Add file header comment** explaining purpose and algorithm
-2. **Document input/output format** 
+2. **Document input/output format** in the file header and `examples/`
 3. **Add main logic comments** for mathematical operations
-4. **Update README.md** with program description
-5. **Include complexity analysis** if applicable
+4. **Update README.md** with program description and paper section mapping
+5. **Add a Makefile target** and an example input if applicable
+6. **Include complexity analysis** if applicable
+
+Paper terminology (from `proof.typ`): use **ONE** / **ZERO** for CRT intersection positions, *first distribution* (intersection indicator) and *second distribution* (geometric at rate \(m_i/p_i\)).
 
 ## Commit Messages
 

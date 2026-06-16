@@ -1,3 +1,25 @@
 input/
 output/
 a.out
+
+# Compiled binaries
+sieve_of_erat
+calc1
+2_ones_random
+set_approach
+consecutive_zeros
+cond_ones
+given_prod_2
+induction_on_n
+k_ones
+check_on_prob
+large_prime_gap
+prob/1
+prob/2
+prob/3
+prob/4
+given/1
+given/2
+
+# Smoke-test output
+/tmp/prime_*_out.txt

@@ -26,6 +26,8 @@
 #include <utility>
 #include <vector>
 
+#include "prime/binomial.hpp"
+
 /**
  * @brief Compare probability bounds for given prime configuration
  * 
@@ -44,10 +46,8 @@ bool compare_two(const std::vector<std::pair<int, int>> &primes) {
   double x = 1.0;
   double y = 1.0;
   
-  for (int i = 0; i < primes.size(); i++) {
-    // Compute binomial coefficient C(p, k)
-    for (int j = 1; j <= primes[i].second; j++)
-      x *= (double)(primes[i].first - j + 1) / j;
+  for (int i = 0; i < static_cast<int>(primes.size()); i++) {
+    x *= static_cast<double>(prime::binomial_u64(primes[i].first, primes[i].second));
   }
   
   // Take logarithm for numerical stability

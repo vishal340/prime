@@ -1,53 +1,64 @@
+#include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <omp.h>
 #include <vector>
-#include<numeric>
+
+#include "prime/early_ones.hpp"
+#include "prime/input.hpp"
+
+namespace {
+
+int64_t gcd_int64(int64_t a, int64_t b) {
+  a = a < 0 ? -a : a;
+  b = b < 0 ? -b : b;
+  while (b != 0) {
+    const int64_t t = b;
+    b = a % b;
+    a = t;
+  }
+  return a;
+}
+
+int64_t lcm_pair(int64_t a, int64_t b) {
+  if (a == 0 || b == 0)
+    return 0;
+  return a / gcd_int64(a, b) * b;
+}
+
+} // namespace
 
 int main(int argc, char *argv[]) {
   std::ifstream in(argv[1]);
-  int iter;
-  in >> iter;
-  while (iter--) {
-    int number;
-    in >> number;
-    std::vector<int> primes(number);
-    for (int i = 0; i < number; i++) {
-      in >> primes[i];
-    }
-    int64_t total = 1;
-    int64_t iter_mod = 1;
-    for (int i = 0; i < number; i++) {
-      total = std::lcm(total,primes[i]);
-      iter_mod *= primes[i] - 2;
-    }
-#pragma omp parallel for schedule(dynamic, iter_mod / atoi(argv[2]))
-    for (int64_t k = 0; k < iter_mod; k++) {
-      std::vector<int> mod(number);
+  const int iter = prime::read_test_count(in);
+  const int chunk = std::max(1, std::atoi(argv[2]));
+  for (int case_idx = 0; case_idx < iter; ++case_idx) {
+    int total = 0;
+    int iter_mod = 0;
+    const std::vector<int> primes = prime::read_primes_only(in, total, iter_mod);
+    int64_t lcm_total = primes[0];
+    for (std::size_t i = 1; i < primes.size(); ++i)
+      lcm_total = lcm_pair(lcm_total, primes[i]);
+
+#pragma omp parallel for schedule(dynamic, chunk)
+    for (int64_t variant = 0; variant < iter_mod; ++variant) {
+      const std::vector<int> mods = prime::derived_mods(primes, static_cast<int>(variant));
       int ones = 1;
-      for (int i = 0; i < number; i++) {
-        mod[i] = 2 + (k % (primes[i] - 2));
-        ones *= mod[i];
-      }
-      double P = (double)ones / (double)total;
-      double acc = 0;
-      for (int64_t i = 1; i < total; i++) {
-        double cur = 1;
-        for (int j = 0; j < number; j++) {
-          if (i % primes[j] != 0) {
-            const double t = (double)(mod[j] - 1) / (double)(primes[j] - 1);
-            cur *= t;
-          }
-        }
-        acc += cur;
-        if (acc / i > P) {
-          std::cout << iter << ' ' << k << ' ' << i << ' ' << acc / i << ' '
-                    << ' ' << P << '\n';
+      for (int m : mods)
+        ones *= m;
+      const double threshold =
+          static_cast<double>(ones) / static_cast<double>(lcm_total);
+      double acc = 0.0;
+      for (int64_t i = 1; i < lcm_total; ++i) {
+        acc += prime::survival_weight(static_cast<int>(i), primes, mods);
+        if (acc / static_cast<double>(i) > threshold) {
+          std::cout << case_idx << ' ' << variant << ' ' << i << ' ' << acc / i
+                    << ' ' << threshold << '\n';
           break;
         }
       }
     }
-    std::cout << "iteration " << iter << " done\n";
+    std::cout << "iteration " << case_idx << " done\n";
   }
   return 0;
 }

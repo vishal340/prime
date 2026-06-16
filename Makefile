@@ -1,91 +1,158 @@
-# Makefile for Prime Tuple Research Programs
-# 
+# Makefile for CRT intersection / Hardy–Littlewood research code
+#
 # Usage:
-#   make sieve      - Build Sieve of Eratosthenes
-#   make calc1      - Build probability calculator
-#   make set        - Build set-based approach (requires GMP)
-#   make 2_ones     - Build 2-tuple analyzer
-#   make all        - Build all programs
-#   make clean      - Remove all compiled binaries
+#   make all        - Build core programs
+#   make research   - Build all standard programs
+#   make proof      - Compile proof.typ → proof.pdf
+#   make examples   - Smoke-test with files in examples/
+#   make clean      - Remove binaries and build artifacts
+#   make help       - Show targets
 
-CXX = g++
-CXXFLAGS = -O3 -std=c++11 -Wall
+CXX       ?= g++
+CXXFLAGS  ?= -O3 -std=c++11 -Wall -Iinclude
+GMP_LIBS  ?= -lgmpxx -lgmp
+TYPST     ?= typst
 
-# Standard compilation flags
-STANDARD_FLAGS = $(CXXFLAGS)
+# Core programs (default `all`)
+CORE_BINS = sieve_of_erat calc1 2_ones_random
 
-# GMP compilation flags (for arbitrary precision)
-GMP_FLAGS = $(CXXFLAGS) -lgmpxx -lgmp
+# Additional research programs
+RESEARCH_BINS = consecutive_zeros cond_ones given_prod_2 induction_on_n \
+                k_ones check_on_prob large_prime_gap \
+                prob/1 prob/2 prob/3 prob/4 given/1
 
-# Optional: Path to GMP library if installed via package manager
-# GMP_PATH = -L/home/vishal340/vcpkg/packages/gmp_x64-linux/lib
-GMP_LIBS = $(GMP_FLAGS) $(GMP_PATH)
+# Optional: requires OpenMP (-fopenmp)
+OPENMP_BINS = given/2
 
-# Default target
-.PHONY: all clean help
+.PHONY: all research proof examples clean help \
+        sieve calc1 2_ones set consecutive_zeros cond_ones given_prod_2 \
+        induction_on_n k_ones check_on_prob large_prime_gap \
+        prob1 prob2 prob3 prob4 given1 given2
 
-all: sieve calc1 2_ones
+all: $(CORE_BINS)
 
-# Sieve of Eratosthenes
-sieve: sieve_of_erat.cpp
-	$(CXX) $(STANDARD_FLAGS) $< -o sieve_of_erat
-	@echo "Built sieve_of_erat"
+research: $(CORE_BINS) $(RESEARCH_BINS)
 
-# Probability Calculator
+# --- Paper ---
+
+proof: proof.typ bibliography.bib
+	$(TYPST) compile proof.typ proof.pdf
+	@echo "Built proof.pdf"
+
+# --- Core ---
+
+sieve: sieve_of_erat
+sieve_of_erat: sieve_of_erat.cpp
+	$(CXX) $(CXXFLAGS) $< -o $@
+	@echo "Built $@"
+
 calc1: calc1.cpp
-	$(CXX) $(STANDARD_FLAGS) $< -o calc1
-	@echo "Built calc1"
+	$(CXX) $(CXXFLAGS) $< -o $@
+	@echo "Built $@"
 
-# 2-Tuple and K-Tuple Analysis
-2_ones: 2_ones_random.cpp
-	$(CXX) $(STANDARD_FLAGS) $< -o 2_ones_random
-	@echo "Built 2_ones_random"
+2_ones: 2_ones_random
+2_ones_random: 2_ones_random.cpp
+	$(CXX) $(CXXFLAGS) $< -o $@
+	@echo "Built $@"
 
-# Set-based approach (requires GMP library)
 set: set_approach.cpp
-	$(CXX) $(GMP_LIBS) $< -o set_approach
-	@echo "Built set_approach (with GMP support)"
+	$(CXX) $(CXXFLAGS) $< $(GMP_LIBS) -o set_approach
+	@echo "Built set_approach (GMP)"
 
-# Additional programs
+# --- Research programs ---
+
 consecutive_zeros: consecutive_zeros.cpp
-	$(CXX) $(STANDARD_FLAGS) $< -o consecutive_zeros
-	@echo "Built consecutive_zeros"
+	$(CXX) $(CXXFLAGS) $< -o $@
+	@echo "Built $@"
+
+cond_ones: cond_ones.cpp
+	$(CXX) $(CXXFLAGS) $< -o $@
+	@echo "Built $@"
 
 given_prod_2: given_prod_2.cpp
-	$(CXX) $(STANDARD_FLAGS) $< -o given_prod_2
-	@echo "Built given_prod_2"
+	$(CXX) $(CXXFLAGS) $< -o $@
+	@echo "Built $@"
 
 induction_on_n: induction_on_n.cpp
-	$(CXX) $(STANDARD_FLAGS) $< -o induction_on_n
-	@echo "Built induction_on_n"
+	$(CXX) $(CXXFLAGS) $< -o $@
+	@echo "Built $@"
 
 k_ones: k_ones.cpp
-	$(CXX) $(STANDARD_FLAGS) $< -o k_ones
-	@echo "Built k_ones"
+	$(CXX) $(CXXFLAGS) $< -o $@
+	@echo "Built $@"
 
-# Clean all compiled binaries
+check_on_prob: check_on_prob.cpp
+	$(CXX) $(CXXFLAGS) $< -o $@
+	@echo "Built $@"
+
+large_prime_gap: large_prime_gap.cpp
+	$(CXX) $(CXXFLAGS) $< -o $@
+	@echo "Built $@"
+
+prob/1: prob/1.cpp
+	$(CXX) $(CXXFLAGS) $< -o $@
+	@echo "Built $@"
+
+prob/2: prob/2.cpp
+	$(CXX) $(CXXFLAGS) $< -o $@
+	@echo "Built $@"
+
+prob/3: prob/3.cpp
+	$(CXX) $(CXXFLAGS) $< -o $@
+	@echo "Built $@"
+
+prob/4: prob/4.cpp
+	$(CXX) $(CXXFLAGS) $< -o $@
+	@echo "Built $@"
+
+given/1: given/1.cpp
+	$(CXX) $(CXXFLAGS) $< -o $@
+	@echo "Built $@"
+
+given/2: given/2.cpp
+	$(CXX) $(CXXFLAGS) -fopenmp $< -o $@
+	@echo "Built $@ (OpenMP)"
+
+prob1: prob/1
+prob2: prob/2
+prob3: prob/3
+prob4: prob/4
+given1: given/1
+given2: given/2
+
+# --- Examples (smoke tests) ---
+
+examples: calc1 consecutive_zeros
+	@echo "Running calc1 on examples/calc1_twin.txt ..."
+	./calc1 examples/calc1_twin.txt /tmp/prime_calc1_out.txt
+	@cat /tmp/prime_calc1_out.txt
+	@echo "Running consecutive_zeros on examples/consecutive_zeros.txt ..."
+	./consecutive_zeros examples/consecutive_zeros.txt /tmp/prime_consec_out.txt
+	@head -5 /tmp/prime_consec_out.txt
+	@echo "Examples OK"
+
+# --- Clean ---
+
 clean:
-	rm -f sieve_of_erat calc1 2_ones_random set_approach
-	rm -f consecutive_zeros given_prod_2 induction_on_n k_ones
+	rm -f $(CORE_BINS) set_approach $(RESEARCH_BINS) $(OPENMP_BINS)
 	rm -f a.out
-	@echo "Cleaned all binaries"
+	@echo "Cleaned binaries"
 
-# Display help information
+# --- Help ---
+
 help:
-	@echo "Prime Tuple Research - Build System"
-	@echo "===================================="
+	@echo "CRT / Hardy–Littlewood Research — Build System"
+	@echo "=============================================="
 	@echo ""
-	@echo "Available targets:"
-	@echo "  make sieve           - Build Sieve of Eratosthenes"
-	@echo "  make calc1           - Build probability calculator"
-	@echo "  make 2_ones          - Build 2-tuple analyzer"
-	@echo "  make set             - Build set-based approach (requires GMP)"
-	@echo "  make all             - Build all standard programs"
-	@echo "  make clean           - Remove all compiled binaries"
-	@echo "  make help            - Display this help message"
+	@echo "  make all          Core: sieve_of_erat, calc1, 2_ones_random"
+	@echo "  make research     All standard programs (excl. optional OpenMP)"
+	@echo "  make proof        Compile proof.typ → proof.pdf"
+	@echo "  make examples     Run smoke tests from examples/"
+	@echo "  make clean        Remove binaries"
 	@echo ""
-	@echo "Example usage:"
-	@echo "  make sieve"
-	@echo "  ./sieve_of_erat 1000 output.txt"
+	@echo "Individual targets:"
+	@echo "  sieve calc1 2_ones set consecutive_zeros cond_ones"
+	@echo "  given_prod_2 induction_on_n k_ones check_on_prob"
+	@echo "  large_prime_gap prob1 prob2 prob3 prob4 given1 given2"
 	@echo ""
-	@echo "For GMP library installation, see README.md"
+	@echo "See README.md for input formats and paper-to-code mapping."

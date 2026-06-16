@@ -1,160 +1,84 @@
-# Prime Tuples and Modulo Research
+# Improved CRT Intersection Methods and Qualitative Hardy–Littlewood Prime K-Tuples
 
-A collection of C++ programs investigating prime tuple distributions, probabilistic coverage gaps, and prime gap analysis under multiple modular constraints.
+C++ experiments for the paper in [`proof.typ`](proof.typ). The writeup is also in [`proof.pdf`](proof.pdf); compile with `make proof` if you change the Typst source. References live in [`bibliography.bib`](bibliography.bib); there's a short supplement in [`sec-consec-budget.typ`](sec-consec-budget.typ).
 
-## Project Overview
+The basic setup: same residue data, two waiting-time models.
 
-This repository contains research code exploring:
-- **Prime tuple hypotheses** with multiple modulo constraints
-- **Probabilistic coverage** of prime tuples in the domain space
-- **Prime gap analysis** using sieve-based algorithms
-- **Modular arithmetic patterns** in prime number distributions
+1. **First distribution (I)** — CRT intersection on a scan; positions are **ONE** or **ZERO**.
+2. **Second distribution (II)** — independent geometric trials at rate \(q_i = m_i / p_i\).
 
-### Key Research Focus
+The programs enumerate configurations, compare moment budgets, and run the finite sieve checks behind the combinatorial arguments in the paper. Shared logic lives in `include/prime/` (CRT bitmasks, residue enumeration, coverage bounds, input parsing).
 
-The main investigation centers on whether probabilistic models can predict gaps in prime tuple coverage when constrained by multiple moduli. Each program tests specific hypotheses about the relationship between prime distributions and their modular residues.
+## What maps to what
 
-## Repository Structure
+Rough guide from paper sections to code:
 
-```
-├── README.md                  # This file
-├── proof.typ                  # Typst documentation of mathematical proof
-├── proof.pdf                  # Compiled proof document
-├── bibliography.bib           # References
-├── Makefile                   # Build configuration
-├── sieve_of_erat.cpp         # Sieve of Eratosthenes implementation
-├── calc1.cpp                  # Probability calculations for prime coverage
-├── 2_ones_random.cpp         # Analysis of 2-tuple and k-tuple distributions
-├── set_approach.cpp          # Set-based approach to coverage analysis
-├── cond_ones.cpp             # Conditional tuple analysis
-├── consecutive_zeros.cpp     # Analysis of consecutive prime gaps
-├── given_prod_2.cpp          # Product-based probability calculations
-├── induction_on_n.cpp        # Mathematical induction over n
-├── k_ones.cpp                # k-tuple analysis
-├── compact_n.cpp             # Compact representation methods
-├── check_on_prob.cpp         # Probability verification
-├── large_prime_gap.cpp       # Large gap detection
-└── input/                    # Sample input files
+- **§2 (framework)** — CRT configs, ONE count \(M = \prod m_i\): `set_approach.cpp`, `induction_on_n.cpp`
+- **§3 (waiting times)** — first vs second moments: `calc1.cpp`, `k_ones.cpp`, `2_ones_random.cpp`, `cond_ones.cpp`, stuff in `prob/`
+- **§4 (early ONEs)** — gap budget \(L_0 \le P - M\), bad configs: `consecutive_zeros.cpp`, `given_prod_2.cpp`, `given/`
+- **§5 (HL tuples)** — admissible \(\mathbf{h}\), trial division: `sieve_of_erat.cpp`, `large_prime_gap.cpp`
+
+`check_on_prob.cpp` sanity-checks output from `prob/1.cpp`. `compact_n.cpp` is half-finished and not built by default.
+
+## Getting started
+
+You'll want a C++11 compiler. Typst is optional (`make proof`). GMP only for `set_approach`; OpenMP only if you build `given/2.cpp` (`make given2`).
+
+```bash
+make all          # core programs
+make research     # everything except optional OpenMP
+make proof        # proof.typ → proof.pdf
+make examples     # quick smoke tests
+make help         # full target list
 ```
 
-## Input Format
+Example run:
 
-All programs that require input follow this standardized format:
-
-**Input File Structure:**
+```bash
+make calc1
+./calc1 examples/calc1_twin.txt /tmp/out.txt
 ```
-<number_of_inputs>
-<input_1_line_1>
-<input_1_data>
+
+## Input format
+
+Most programs take a config file like:
+
+```
+<number_of_test_cases>
+<number_of_moduli>
+<prime_1> <multiplicity_1>
+<prime_2> <multiplicity_2>
 ...
-<input_n_line_1>
-<input_n_data>
 ```
 
-**Per Input Format:**
-- First line: number of coprimes to follow
-- Each subsequent line: `<coprime> <modulus_value>`
+Here \(m_i = |S_i|\) is how many ONEs you allow mod \(p_i\). For the twin-prime tail \(\mathbf{h} = (0,2)\) on odd primes, that's \(m_i = p_i - 2\) — see `examples/calc1_twin.txt`.
 
-**Example Input:**
-```
-2
-2
-5 2
-7 2
-3
-6 3
-11 4
-13 5
-```
+Exceptions: `2_ones_random` wants `p k x` per case; `sieve_of_erat` takes `<limit> <output_file>`; `large_prime_gap` reads primes from stdin plus a threshold arg.
 
-This example defines 2 inputs:
-- **Input 1**: 2 coprimes (5 mod 2, 7 mod 2)
-- **Input 2**: 3 coprimes (6 mod 3, 11 mod 4, 13 mod 5)
+## Programs
 
-Some programs require an additional parameter `x` on the first line of input (total domain size distribution).
+| Program | What it does |
+|---------|----------------|
+| `sieve_of_erat` | Primes up to \(n\) |
+| `calc1` | Combinatorial vs log probability bounds → `0`/`1` per case |
+| `2_ones_random` | 2/3-tuple bounds on a random domain |
+| `set_approach` | Set enumeration (needs GMP) |
+| `consecutive_zeros` | Longest run of ZEROs before the first ONE |
+| `cond_ones` | Conditional ONE probability vs full range |
+| `given_prod_2` | Product-moduli enumeration |
+| `induction_on_n` | Walk configurations, count bad ones |
+| `k_ones` | k-th ONE waiting time for two moduli |
+| `check_on_prob` | Check `prob/` output ratios |
+| `large_prime_gap` | Flag unusually large prime gaps |
+| `prob/1`–`prob/4` | Moment enumeration variants |
+| `given/1`, `given/2` | Fixed prime-list analysis |
 
-## Building & Running
+Sample inputs are in `examples/`.
 
-### Prerequisites
-- C++ compiler (g++ with -O3 optimization support)
-- GMP library (for arbitrary precision arithmetic in `set_approach.cpp`)
+## Background (one paragraph)
 
-### Compilation
+Pairwise coprime \((p_i)\), allowed sets \(S_i\) with \(|S_i| = m_i\). The CRT intersection \(D(\mathbf{S})\) has \(M = \prod m_i\) ONEs per period \(P = \prod p_i\). For admissible Hardy–Littlewood \(\mathbf{h}\), the paper's deterministic config uses \(m_i = p_i - |F_{p_i}(\mathbf{h})|\) and proves qualitative prime \(k\)-tuples below \(p_{n+1}^2\) at enough sieve depth — not the classical singular-series density. The code pokes at gap budgets (\(L_0 \le P - M\)), moment ordering (\(E[W^{(I)}] > E[W^{(II)}]\)), and bad configs with no early ONE.
 
-**Simple programs:**
-```bash
-g++ -O3 sieve_of_erat.cpp -o sieve
-./sieve <n> <output_file>
-```
+## Contributing
 
-**With GMP library:**
-```bash
-g++ -O3 set_approach.cpp -lgmpxx -lgmp -o set_approach
-./set_approach input.txt output.txt
-```
-
-**Using Makefile:**
-```bash
-make set
-```
-
-## Program Descriptions
-
-| Program | Purpose | Input | Output |
-|---------|---------|-------|--------|
-| `sieve_of_erat.cpp` | Generate primes up to n using Sieve of Eratosthenes | n (limit) | Primes + timing |
-| `calc1.cpp` | Calculate probability bounds for prime coverage | Configuration file | Coverage analysis |
-| `2_ones_random.cpp` | Analyze 2-tuple distributions under random domain | Config + x | Probability results |
-| `set_approach.cpp` | Set-based coverage analysis (requires GMP) | Config file | Detailed coverage |
-| `consecutive_zeros.cpp` | Analyze consecutive prime gaps | Configuration | Gap statistics |
-| `given_prod_2.cpp` | Probability via product of moduli | Configuration | Product-based analysis |
-| `induction_on_n.cpp` | Inductive proofs on n values | Configuration | Induction results |
-| `k_ones.cpp` | Generalize to k-tuple analysis | Configuration | k-tuple bounds |
-
-## Mathematical Background
-
-The research investigates whether prime tuple coverage gaps can be predicted using:
-1. **Probability bounds** based on Chinese Remainder Theorem
-2. **Modular residue analysis** across multiple primes
-3. **Combinatorial counting** of overlapping modular constraints
-4. **Inductive proofs** on increasing domain sizes
-
-See `proof.typ` for detailed mathematical formulation.
-
-## References
-
-See `bibliography.bib` for academic references related to:
-- Prime gap theory
-- Diophantine equations and modular arithmetic
-- Chinese Remainder Theorem applications
-- Prime tuple conjecture research
-
-## Output Format
-
-Most programs write results to `output.txt` (or specified output file) with:
-- Boolean verdicts (1 = hypothesis confirmed, 0 = falsified)
-- Per-input analysis results
-- Distribution statistics
-
-## Future Improvements
-
-- [ ] Add unit tests for validation
-- [ ] Create visualization tools for gap analysis
-- [ ] Implement parallel processing for large n
-- [ ] Add command-line argument parsing
-- [ ] Create detailed algorithm documentation
-
-## Notes
-
-- All C++ files use `-O3` optimization for performance
-- Some programs use `std::vector<bool>` for memory efficiency
-- Timing measurements use `clock_gettime` for precision
-- GMP library required only for arbitrary precision in `set_approach.cpp`
-
-## License
-
-This repository contains research code. See individual files for licensing details.
-
-## Contact
-
-For questions about the research or code, please open an issue.
+See [`CONTRIBUTING.md`](CONTRIBUTING.md). Open an issue if something's unclear.

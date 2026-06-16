@@ -1,142 +1,45 @@
-#include <cmath>
-#include <cstdint>
 #include <fstream>
 #include <iostream>
-#include <vector>
+
+#include "prime/coverage.hpp"
+#include "prime/crt/bitmasks.hpp"
+#include "prime/input.hpp"
 
 int main(int argc, char **argv) {
   std::ifstream in(argv[1]);
-  int iter, i, j, k;
-  in >> iter;
-  while (iter--) {
-    int number;
-    in >> number;
-    std::vector<int> prime(number);
-    int total = 1, iter_mod = 1;
-    for (i = 0; i < number; i++) {
-      in >> prime[i];
-      total *= prime[i];
-      iter_mod *= prime[i] - 2;
-    }
-    uint32_t ***seq = new uint32_t **[number];
-    int len = std::ceil(total / 32);
-    for (i = 0; i < number; i++) {
-      seq[i] = new uint32_t *[prime[i]];
-      for (j = 0; j < prime[i]; j++)
-        seq[i][j] = new uint32_t[len]{0};
-    }
-    for (i = 0; i < number; i++) {
-      int g = total / prime[i];
-      for (j = 0; j < prime[i]; j++) {
-        int t = j;
-        for (k = 0; k < g; k++) {
-          seq[i][j][t / 32] |= (1 << (t % 32));
-          t += prime[i];
-        }
-      }
-    }
-    int **cur = new int *[number];
-    for (int it = 0; it < iter_mod; it++) {
-      std::vector<uint64_t> acc(total, 0);
-      std::vector<int> mod(number);
-      for (i = 0; i < number; i++) {
-        mod[i] = 2 + (it % (prime[i] - 2));
-      }
-      uint64_t perm = 1;
-      for (i = 0; i < number; i++) {
-        uint64_t t = prime[i];
-        for (j = 1; j < mod[i]; j++) {
-          t *= (uint64_t)(prime[i] - j);
-          t /= (uint64_t)(j + 1);
-        }
-        perm *= t;
-      }
-      for (i = 0; i < number; i++) {
-        cur[i] = new int[mod[i]];
-        for (j = 0; j < mod[i]; j++)
-          cur[i][j] = j;
-      }
-      uint32_t comp[32];
-      for (i = 0; i < 32; i++)
-        comp[i] = (uint32_t)(1 << i);
-      while (perm--) {
-        std::vector<uint32_t> dist(len, 0);
-        for (j = 0; j < mod[0]; j++) {
-          for (k = 0; k < len; k++) {
-            int t = cur[0][j];
-            dist[k] |= seq[0][t][k];
-          }
-        }
-        for (i = 1; i < number; i++) {
-          std::vector<uint32_t> temp_dist(len, 0);
-          for (j = 0; j < mod[i]; j++) {
-            const auto &t = seq[i][cur[i][j]];
-            for (k = 0; k < len; k++) {
-              temp_dist[k] |= t[k];
-            }
-          }
-          for (k = 0; k < len; k++) {
-            dist[k] &= temp_dist[k];
-          }
-        }
-        for (i = 0; i < len; i++) {
-          if (dist[i]) {
-            for (j = 0; j < 32; j++) {
-              if (dist[i] & comp[j]) {
-                for (k = 0; k < j; k++)
-                  acc[i * 32 + k]++;
-                break;
-              }
-            }
-            break;
-          } else {
-            for (j = i * 32; j < (i + 1) * 32; j++) {
-              acc[j]++;
-            }
-          }
-        }
-        if (perm) {
-          // next permutation
-          i = 0;
-          while (cur[i][0] == (prime[i] - mod[i])) {
-            for (j = 0; j < mod[i]; j++)
-              cur[i][j] = j;
-            i++;
-          }
-          j = mod[i] - 1;
-          while (cur[i][j] == (prime[i] + j - mod[i])) {
-            j--;
-          }
-          int t = cur[i][j];
-          for (k = j; k < mod[i]; k++) {
-            cur[i][k] = t + k - j + 1;
-          }
-        }
-      }
-      for (i = 0; i < number; i++)
-        delete[] cur[i];
-      long double prob = 1.0;
-      for (i = 0; i < number; i++) {
-        prob *= (long double)mod[i] / (long double)prime[i];
-      }
-      prob = 1.0 - prob;
-      for (i = 1; i < total; i++) {
-        if ((long double)acc[i] / (long double)acc[i - 1] > prob) {
+  int iter = prime::read_test_count(in);
+  while (iter-- > 0) {
+    int total = 0;
+    int iter_mod = 0;
+    const std::vector<int> primes = prime::read_primes_only(in, total, iter_mod);
+    const auto seq = prime::crt::build_residue_masks(primes, total);
+    for (int variant = 0; variant < iter_mod; ++variant) {
+      const std::vector<int> mods = prime::derived_mods(primes, variant);
+      const auto acc =
+          prime::crt::leading_zero_histogram(primes, mods, seq, total);
+
+      long double hit = 1.0;
+      for (std::size_t i = 0; i < primes.size(); ++i)
+        hit *= static_cast<long double>(mods[i]) /
+               static_cast<long double>(primes[i]);
+      const long double threshold = 1.0 - hit;
+
+      for (int i = 1; i < total; ++i) {
+        if (static_cast<long double>(acc[i]) /
+                static_cast<long double>(acc[i - 1]) >
+            threshold) {
           std::cout << iter << ' '
-                    << (long double)acc[i] / (long double)acc[i - 1] << ' '
-                    << prob << ' ' << i << '\n';
-          for (j = 0; j < number; j++)
-            std::cout << mod[j] << ' ';
+                    << static_cast<long double>(acc[i]) /
+                           static_cast<long double>(acc[i - 1])
+                    << ' ' << threshold << ' ' << i << '\n';
+          for (int m : mods)
+            std::cout << m << ' ';
           std::cout << '\n';
           break;
         }
       }
     }
     std::cout << "iteration " << iter << " completed\n";
-    // for (i = 0; i < number; i++)
-    //   for (j = 0; j < prime[i]; j++)
-    //     delete[] seq[i][j];
-    // delete[] cur, seq;
   }
   return 0;
 }
